@@ -3,6 +3,12 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdbool.h>
+/*
+reference 
+https://github.com/bmanojlovic/log4c
+https://github.com/rxi/log.c
+https://github.com/nsnam/ns-3-dev-git
+*/
 typedef enum
 {
     LOG_NONE           = 0x00000000, // no logging
@@ -26,7 +32,7 @@ typedef enum
     LOG_LEVEL_ALL      = LOG_ALL,
 }LogLevel;
 
-typedef void(*log_sink_cb)(int level,const char*file,int line,
+typedef void(*log_sink_cb)(const char *name,int level,const char*file,int line,
                             const char *data,int length);
 //copy from ut hash
 typedef struct UT_hh{
@@ -45,21 +51,19 @@ typedef struct{
     LogLevel level;
     log_sink_cb sink;
 }LogCategory;
-void register_log(LogCategory *log);
-LogCategory *fecth_log(const char *name);
+LogCategory *create_log(const char *name);
 void log_category_enable(const char *name,int level);
 void log_category_disable(const char *name,int level);
 void add_custom_log_sink(const char *name,log_sink_cb cb);
 
 #define DEFINE_LOG_CATEGORY(namestr) \
-static volatile LogCategory g_log={.name=namestr};\
+static const char *g_log_name=namestr;\
 static LogCategory *g_log_ptr=NULL;
 
-#define DEFINE_LOG_CATEGORY_EXTERN(namestr)\
-const char *g_log_name=namestr;\
-static LogCategory *g_log_ptr=NULL;
+#define LOG_ENSURE_REGISTER() do{\
+    g_log_ptr=create_log(g_log_name);\
+}while(0)
 
-//https://github.com/rxi/log.c
 #define log_trace(...) my_log_output(g_log_ptr,LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
 #define log_debug(...) my_log_output(g_log_ptr,LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
 #define log_info(...)  my_log_output(g_log_ptr,LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)

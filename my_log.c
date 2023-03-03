@@ -14,18 +14,15 @@ typedef struct{
     log_sink_cb sink;
 }LogLink;
 
-static LogLink *manager=NULL;
-void register_log(LogCategory *log){
-    LogLink *found=NULL;
-    HASH_FIND_STR(manager,log->name,found);
-    if(!found){
-        found=(LogLink*)log;
-        HASH_ADD_KEYPTR(hh,manager,found->name,strlen(found->name),found);
-    }
-}
-LogCategory *fecth_log(const char *name){
+static volatile LogLink *manager=NULL;
+LogCategory *create_log(const char *name){
     LogLink *found=NULL;
     HASH_FIND_STR(manager,name,found);
+    if(!found){
+        found=(LogLink*)malloc(sizeof(*found));
+        found->name=name;
+        HASH_ADD_KEYPTR(hh,manager,found->name,strlen(found->name),found);
+    }
     return (LogCategory*)found;
 }
 void log_category_enable(const char *name,int level){
@@ -76,7 +73,7 @@ void my_log_output(LogCategory *log,int level,const char *file,int line,const ch
             va_start(args,fmt);
             int l=vsnprintf(g_log_buffer,LOG_BUFFER_SIZE,fmt,args);
             va_end(args);
-            log->sink(level,file,line,g_log_buffer,l);
+            log->sink(log->name,level,file,line,g_log_buffer,l);
         }else{
             fprintf(stderr,"%s %s:%d ",level_str(level),file,line);
             va_list args;

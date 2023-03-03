@@ -1,9 +1,8 @@
 #include "module_a.h"
 #include "my_log.h"
-DEFINE_LOG_CATEGORY("module_a");
+DEFINE_LOG_CATEGORY("main");
 void module_a_init(void){
-    g_log_ptr=&g_log;
-    register_log(g_log_ptr);
+    LOG_ENSURE_REGISTER();
 }
 void module_a_post_init(){}
 
